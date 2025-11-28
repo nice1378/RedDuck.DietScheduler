@@ -16,17 +16,21 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '7.0.x' # 사용하시는 버전 확인
+          dotnet-version: '7.0.x'
 
-      # [여기만 수정] 폴더명/프로젝트명.csproj 경로를 정확히 입력하세요
       - name: Publish .NET Core Project
         run: dotnet publish ./DietScheduler/WebDietScheduler/WebDietScheduler.csproj -c Release -o release --nologo
 
-      # 리포지토리 이름이 'RedDuck.DietScheduler'이라면 아래와 같이 수정
+      # Base href modification for GitHub Pages
       - name: Change base-tag in index.html
         run: sed -i 's/<base href="\/" \/>/<base href="\/RedDuck.DietScheduler\/" \/>/g' release/wwwroot/index.html
 
-      # 배포 경로는 release/wwwroot 그대로 둡니다 (위에서 -o release로 뺐기 때문)
+      # Fix for GitHub Pages (NoJekyll and 404 routing)
+      - name: Fix GitHub Pages issues
+        run: |
+          touch release/wwwroot/.nojekyll
+          cp release/wwwroot/index.html release/wwwroot/404.html
+
       - name: Commit wwwroot to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
