@@ -1,7 +1,7 @@
 {
   "entryAssembly": "WebDietScheduler",
   "resources": {
-    "hash": "sha256-yOK8IxXhUgUvhQhjMtxOVjsQPfjvXULHbdl30qjZ5wo=",
+    "hash": "sha256-frqE7idukZqRl+F5qHBaRG1hBrB7EiFDKEOEWT3EZkY=",
     "runtime": {
       "dotnet.js": "sha256-eaJTmow4t8eE7FZMZR5Ja41JMOefGCbIYDTdpclGsac=",
       "dotnet.timezones.blat": "sha256-gbATD5HDsHYtW8vdPYh9iSBY4O5CjvMeCSF5xXWF1xo=",
@@ -38,7 +38,7 @@
       "System.Text.Encodings.Web.dll": "sha256-lFKuTdK7dtov2eQtRGzxU/SvD4yA7ybK4oD2lzMl77g=",
       "System.Text.Json.dll": "sha256-DE3tkWjcW3FVVOv/avneBBzt4LkEhIPWKm7FwU+jfrY=",
       "System.Private.CoreLib.dll": "sha256-ifxhv+bQhjNumJN8YxWawVx3u/LRTkqJOiJ5096Exoc=",
-      "WebDietScheduler.dll": "sha256-AW5OPYu4nbzLxJJjdVG2Quz19qJxGf4R75wDy4kXaEY="
+      "WebDietScheduler.dll": "sha256-tBvoGBI1tMYDu8tBKMEbJLKrtmTJuURMPSVc17jNI2Q="
     },
     "runtimeAssets": {
       "dotnet.wasm": {
