@@ -11,4 +11,11 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="7.0.19" PrivateAssets="all" />
   </ItemGroup>
 
+  <!-- 파이썬 스크립트 등은 빌드/게시 결과물에서 제외 -->
+  <ItemGroup>
+    <Content Remove="**\*.py" />
+    <None Remove="**\*.py" />
+    <None Include="**\*.py" CopyToOutputDirectory="Never" />
+  </ItemGroup>
+
 </Project>

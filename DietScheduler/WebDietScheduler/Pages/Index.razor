@@ -1,3 +1,244 @@
 ﻿@page "/"
+@using WebDietScheduler.Models
+@using WebDietScheduler.Services
+@using Microsoft.AspNetCore.Components.Forms
+@inject CsvService CsvService
+@inject DietGeneratorService DietGeneratorService
+@inject IJSRuntime JS
+@inject HttpClient Http
 
-<h1>Hello, world!</h1>
+<PageTitle>다이어트 식단 스케줄러</PageTitle>
+
+<div class="container mt-4">
+    <h1 class="mb-4">🥗 다이어트 식단 스케줄러</h1>
+
+    @if (!isLoaded)
+    {
+        <div class="alert alert-warning">
+            기본 데이터(식품 가격, 1년치 식단 기록)를 불러오는 중입니다...
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">
+             ✅ 기본 데이터 로드 완료: 식품 @foodDatabase.Count 개, 이전 기록 @previousHistoryCount 건 확인됨.
+        </div>
+    }
+
+    <div class="row">
+        <!-- 설정 및 입력 폼 -->
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-header bg-primary text-white">1. 데이터 업로드 (선택)</div>
+                <div class="card-body">
+                    <p class="small text-muted mb-2">기본 데이터가 자동으로 로드되지만, 원하시면 다른 파일을 업로드할 수 있습니다.</p>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">식품 가격 정보 CSV</label>
+                        <InputFile OnChange="@LoadFoodCsv" class="form-control" accept=".csv" />
+                        <small class="text-muted">포맷: 이름,분류,칼로리,가격,계절,대상</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">이전 식단 기록 CSV</label>
+                        <InputFile OnChange="@LoadHistoryCsv" class="form-control" accept=".csv" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header bg-success text-white">2. 조건 설정</div>
+                <div class="card-body">
+                    <EditForm Model="@request" OnValidSubmit="@GenerateDiet">
+                        <div class="mb-3">
+                            <label class="form-label">시작 일자</label>
+                            <InputDate @bind-Value="request.StartDate" class="form-control" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">기간 (일)</label>
+                            <InputNumber @bind-Value="request.DurationDays" class="form-control" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">대상</label>
+                            <InputSelect @bind-Value="request.TargetAudience" class="form-control">
+                                <option value="어린이">어린이</option>
+                                <option value="성인">성인</option>
+                                <option value="노인">노인</option>
+                            </InputSelect>
+                        </div>
+
+                        <hr />
+                        <h6>끼니별 예산(원) / 칼로리(kcal)</h6>
+                        
+                        <div class="row mb-2">
+                            <div class="col-4"><label class="col-form-label">아침</label></div>
+                            <div class="col-4"><InputNumber @bind-Value="request.BreakfastBudget" class="form-control form-control-sm" placeholder="원" /></div>
+                            <div class="col-4"><InputNumber @bind-Value="request.BreakfastCalories" class="form-control form-control-sm" placeholder="kcal" /></div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-4"><label class="col-form-label">점심</label></div>
+                            <div class="col-4"><InputNumber @bind-Value="request.LunchBudget" class="form-control form-control-sm" /></div>
+                            <div class="col-4"><InputNumber @bind-Value="request.LunchCalories" class="form-control form-control-sm" /></div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-4"><label class="col-form-label">저녁</label></div>
+                            <div class="col-4"><InputNumber @bind-Value="request.DinnerBudget" class="form-control form-control-sm" /></div>
+                            <div class="col-4"><InputNumber @bind-Value="request.DinnerCalories" class="form-control form-control-sm" /></div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 mt-3" disabled="@(!foodDatabase.Any())">
+                            식단 생성하기
+                        </button>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+
+        <!-- 결과 표시 -->
+        <div class="col-md-8">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3>📅 생성된 식단표</h3>
+                @if (generatedPlan.Any())
+                {
+                    <button class="btn btn-outline-success" @onclick="DownloadCsv">⬇ CSV 다운로드</button>
+                }
+            </div>
+
+            @if (!generatedPlan.Any())
+            {
+                <div class="alert alert-secondary">
+                    조건을 확인하고 [식단 생성하기] 버튼을 눌러주세요.
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>날짜</th>
+                                <th>아침 (kcal/원)</th>
+                                <th>점심 (kcal/원)</th>
+                                <th>저녁 (kcal/원)</th>
+                                <th>일일 합계</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var day in generatedPlan)
+                            {
+                                <tr>
+                                    <td>@day.Date.ToString("MM/dd") <br/><small>(@day.Date.DayOfWeek)</small></td>
+                                    <td>
+                                        @RenderMeal(day.Breakfast)
+                                    </td>
+                                    <td>
+                                        @RenderMeal(day.Lunch)
+                                    </td>
+                                    <td>
+                                        @RenderMeal(day.Dinner)
+                                    </td>
+                                    <td>
+                                        <strong>@day.TotalCalories kcal</strong><br/>
+                                        @day.TotalPrice.ToString("N0") 원
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private DietRequest request = new DietRequest();
+    private List<FoodItem> foodDatabase = new();
+    private List<DailyDiet> generatedPlan = new();
+    private bool isLoaded = false;
+    private int previousHistoryCount = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // 1. 식품 가격 정보 로드
+            // 로컬 개발 환경이나 GitHub Pages 환경에 따라 경로가 다를 수 있음
+            // <base href>가 설정되어 있으므로 상대 경로 사용 가능
+            var foodCsv = await Http.GetStringAsync("CSVs/FoodPriceList.csv");
+            foodDatabase = await CsvService.ParseFoodItemsFromStringAsync(foodCsv);
+
+            // 2. 1년치 식단 기록 로드 (현재는 로직에 직접 사용되진 않고 로드 확인만 함)
+            var historyCsv = await Http.GetStringAsync("CSVs/DietHistory.csv");
+            // TODO: 실제 파싱 로직 구현 시 여기에 추가
+            previousHistoryCount = historyCsv.Split('\n').Length - 1; // 대략적인 라인 수 체크
+
+            isLoaded = true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading default CSVs: {ex.Message}");
+        }
+    }
+    
+    // 파일 업로드 (덮어쓰기)
+    private async Task LoadFoodCsv(InputFileChangeEventArgs e)
+    {
+        try 
+        {
+            foodDatabase = await CsvService.ParseFoodItemsAsync(e.File);
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading CSV: {ex.Message}");
+        }
+    }
+
+    private void LoadHistoryCsv(InputFileChangeEventArgs e)
+    {
+        // TODO: 이전 식단 기록 파싱 (현재 로직에는 미반영, 추후 확장)
+    }
+
+    private void GenerateDiet()
+    {
+        if (!foodDatabase.Any()) return;
+        
+        generatedPlan = DietGeneratorService.GenerateDiet(request, foodDatabase, new List<string>());
+    }
+
+    private async Task DownloadCsv()
+    {
+        var csvContent = CsvService.GenerateDietCsv(generatedPlan);
+        var bytes = System.Text.Encoding.UTF8.GetBytes(csvContent);
+        var bom = System.Text.Encoding.UTF8.GetPreamble();
+        var result = new byte[bom.Length + bytes.Length];
+        Buffer.BlockCopy(bom, 0, result, 0, bom.Length);
+        Buffer.BlockCopy(bytes, 0, result, bom.Length, bytes.Length);
+
+        using var stream = new MemoryStream(result);
+        using var streamRef = new DotNetStreamReference(stream);
+        
+        await JS.InvokeVoidAsync("downloadFileFromStream", "DietPlan.csv", streamRef);
+    }
+
+    private RenderFragment RenderMeal(List<FoodItem> items) => builder =>
+    {
+        if (!items.Any())
+        {
+             builder.AddContent(0, "-");
+             return;
+        }
+
+        builder.OpenElement(0, "div");
+        foreach (var item in items)
+        {
+            builder.OpenElement(1, "div");
+            builder.AddContent(2, item.Name);
+            builder.CloseElement();
+        }
+        builder.OpenElement(3, "small");
+        builder.AddAttribute(4, "class", "text-muted");
+        builder.AddContent(5, $"{items.Sum(x => x.Calories)}kcal / {items.Sum(x => x.Price):N0}원");
+        builder.CloseElement();
+        builder.CloseElement();
+    };
+}
