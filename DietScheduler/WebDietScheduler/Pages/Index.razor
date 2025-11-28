@@ -25,131 +25,251 @@
         </div>
     }
 
-    <div class="row">
-        <!-- 설정 및 입력 폼 -->
-        <div class="col-md-4">
-            <div class="card mb-3">
-                <div class="card-header bg-primary text-white">1. 데이터 업로드 (선택)</div>
-                <div class="card-body">
-                    <p class="small text-muted mb-2">기본 데이터가 자동으로 로드되지만, 원하시면 다른 파일을 업로드할 수 있습니다.</p>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">식품 가격 정보 CSV</label>
-                        <InputFile OnChange="@LoadFoodCsv" class="form-control" accept=".csv" />
-                        <small class="text-muted">포맷: 이름,분류,칼로리,가격,계절,대상</small>
+    <!-- 탭 네비게이션 -->
+    <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+            <button class="nav-link @(activeTab == 0 ? "active" : "")" @onclick="() => activeTab = 0">
+                📅 식단 생성기
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link @(activeTab == 1 ? "active" : "")" @onclick="() => activeTab = 1">
+                📋 식품 데이터베이스
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link @(activeTab == 2 ? "active" : "")" @onclick="() => activeTab = 2">
+                ℹ️ 프로젝트 정보
+            </button>
+        </li>
+    </ul>
+
+    <!-- 탭 컨텐츠 -->
+    <div class="tab-content">
+        
+        <!-- 탭 1: 식단 생성기 -->
+        @if (activeTab == 0)
+        {
+            <div class="row">
+                <!-- 설정 및 입력 폼 -->
+                <div class="col-md-4">
+                    <div class="card mb-3">
+                        <div class="card-header bg-primary text-white">1. 데이터 업로드 (선택)</div>
+                        <div class="card-body">
+                            <p class="small text-muted mb-2">기본 데이터가 자동으로 로드되지만, 원하시면 다른 파일을 업로드할 수 있습니다.</p>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">식품 가격 정보 CSV</label>
+                                <InputFile OnChange="@LoadFoodCsv" class="form-control" accept=".csv" />
+                                <small class="text-muted">포맷: 이름,분류,칼로리,가격,계절,대상</small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">이전 식단 기록 CSV</label>
+                                <InputFile OnChange="@LoadHistoryCsv" class="form-control" accept=".csv" />
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">이전 식단 기록 CSV</label>
-                        <InputFile OnChange="@LoadHistoryCsv" class="form-control" accept=".csv" />
+
+                    <div class="card">
+                        <div class="card-header bg-success text-white">2. 조건 설정</div>
+                        <div class="card-body">
+                            <EditForm Model="@request" OnValidSubmit="@GenerateDiet">
+                                <div class="mb-3">
+                                    <label class="form-label">시작 일자</label>
+                                    <InputDate @bind-Value="request.StartDate" class="form-control" />
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">기간 (일)</label>
+                                    <InputNumber @bind-Value="request.DurationDays" class="form-control" />
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">대상</label>
+                                    <InputSelect @bind-Value="request.TargetAudience" class="form-control">
+                                        <option value="어린이">어린이</option>
+                                        <option value="성인">성인</option>
+                                        <option value="노인">노인</option>
+                                    </InputSelect>
+                                </div>
+
+                                <hr />
+                                <h6>끼니별 예산(원) / 칼로리(kcal)</h6>
+                                
+                                <div class="row mb-2">
+                                    <div class="col-4"><label class="col-form-label">아침</label></div>
+                                    <div class="col-4"><InputNumber @bind-Value="request.BreakfastBudget" class="form-control form-control-sm" placeholder="원" /></div>
+                                    <div class="col-4"><InputNumber @bind-Value="request.BreakfastCalories" class="form-control form-control-sm" placeholder="kcal" /></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-4"><label class="col-form-label">점심</label></div>
+                                    <div class="col-4"><InputNumber @bind-Value="request.LunchBudget" class="form-control form-control-sm" /></div>
+                                    <div class="col-4"><InputNumber @bind-Value="request.LunchCalories" class="form-control form-control-sm" /></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-4"><label class="col-form-label">저녁</label></div>
+                                    <div class="col-4"><InputNumber @bind-Value="request.DinnerBudget" class="form-control form-control-sm" /></div>
+                                    <div class="col-4"><InputNumber @bind-Value="request.DinnerCalories" class="form-control form-control-sm" /></div>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary w-100 mt-3" disabled="@(!foodDatabase.Any())">
+                                    식단 생성하기
+                                </button>
+                            </EditForm>
+                        </div>
                     </div>
                 </div>
-            </div>
 
+                <!-- 결과 표시 -->
+                <div class="col-md-8">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3>📅 생성된 식단표</h3>
+                        @if (generatedPlan.Any())
+                        {
+                            <button class="btn btn-outline-success" @onclick="DownloadCsv">⬇ CSV 다운로드</button>
+                        }
+                    </div>
+
+                    @if (!generatedPlan.Any())
+                    {
+                        <div class="alert alert-secondary">
+                            조건을 확인하고 [식단 생성하기] 버튼을 눌러주세요.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>날짜</th>
+                                        <th>아침 (kcal/원)</th>
+                                        <th>점심 (kcal/원)</th>
+                                        <th>저녁 (kcal/원)</th>
+                                        <th>일일 합계</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var day in generatedPlan)
+                                    {
+                                        <tr>
+                                            <td>@day.Date.ToString("MM/dd") <br/><small>(@day.Date.DayOfWeek)</small></td>
+                                            <td>@RenderMeal(day.Breakfast)</td>
+                                            <td>@RenderMeal(day.Lunch)</td>
+                                            <td>@RenderMeal(day.Dinner)</td>
+                                            <td>
+                                                <strong>@day.TotalCalories kcal</strong><br/>
+                                                @day.TotalPrice.ToString("N0") 원
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- 탭 2: 식품 데이터베이스 -->
+        @if (activeTab == 1)
+        {
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <span class="fw-bold">📋 식품 데이터베이스</span>
+                    <span class="badge bg-light text-dark">총 @foodDatabase.Count 건</span>
+                </div>
+                <div class="card-body p-0">
+                    @if (!foodDatabase.Any())
+                    {
+                        <div class="text-center py-5">
+                            <p class="text-muted mb-0">로드된 데이터가 없습니다.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive" style="max-height: 650px; overflow-y: auto;">
+                            <table class="table table-hover table-striped mb-0 align-middle">
+                                <thead class="table-secondary sticky-top" style="z-index: 1;">
+                                    <tr>
+                                        <th class="ps-4">이름</th>
+                                        <th class="text-center">분류</th>
+                                        <th class="text-end">칼로리</th>
+                                        <th class="text-end">가격</th>
+                                        <th class="text-center">계절</th>
+                                        <th class="text-center">대상</th>
+                                        <th class="text-center pe-4">빈도제한</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in foodDatabase.OrderBy(f => GetCategoryOrder(f.Category)).ThenBy(f => f.Name))
+                                    {
+                                        <tr>
+                                            <td class="ps-4 fw-medium">@item.Name</td>
+                                            <td class="text-center">
+                                                <span class="badge @GetCategoryBadgeClass(item.Category) rounded-pill">
+                                                    @item.Category
+                                                </span>
+                                            </td>
+                                            <td class="text-end">@item.Calories <small class="text-muted">kcal</small></td>
+                                            <td class="text-end">@item.Price.ToString("N0") <small class="text-muted">원</small></td>
+                                            <td class="text-center">
+                                                @if (item.Season == "사계절") { <span class="text-muted">@item.Season</span> }
+                                                else { <span class="fw-bold text-success">@item.Season</span> }
+                                            </td>
+                                            <td class="text-center">@item.Target</td>
+                                            <td class="text-center pe-4">
+                                                @if (item.MaxFrequencyPerDay >= 3) { <span class="badge bg-light text-secondary border">매끼</span> }
+                                                else { <span class="badge bg-light text-secondary border">@item.MaxFrequencyPerDay 회/일</span> }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- 탭 3: 프로젝트 정보 -->
+        @if (activeTab == 2)
+        {
             <div class="card">
-                <div class="card-header bg-success text-white">2. 조건 설정</div>
                 <div class="card-body">
-                    <EditForm Model="@request" OnValidSubmit="@GenerateDiet">
-                        <div class="mb-3">
-                            <label class="form-label">시작 일자</label>
-                            <InputDate @bind-Value="request.StartDate" class="form-control" />
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">기간 (일)</label>
-                            <InputNumber @bind-Value="request.DurationDays" class="form-control" />
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">대상</label>
-                            <InputSelect @bind-Value="request.TargetAudience" class="form-control">
-                                <option value="어린이">어린이</option>
-                                <option value="성인">성인</option>
-                                <option value="노인">노인</option>
-                            </InputSelect>
-                        </div>
+                    <h3 class="card-title">ℹ️ 프로젝트 정보</h3>
+                    <hr />
+                    <h5>1. 프로젝트 개요</h5>
+                    <p>
+                        이 프로그램은 사용자의 예산과 칼로리 목표에 맞춰 자동으로 다이어트 식단을 생성해주는 웹 애플리케이션입니다.
+                        대상(어린이, 성인, 노인)과 계절을 고려하여 적절한 메뉴를 추천합니다.
+                    </p>
 
-                        <hr />
-                        <h6>끼니별 예산(원) / 칼로리(kcal)</h6>
-                        
-                        <div class="row mb-2">
-                            <div class="col-4"><label class="col-form-label">아침</label></div>
-                            <div class="col-4"><InputNumber @bind-Value="request.BreakfastBudget" class="form-control form-control-sm" placeholder="원" /></div>
-                            <div class="col-4"><InputNumber @bind-Value="request.BreakfastCalories" class="form-control form-control-sm" placeholder="kcal" /></div>
-                        </div>
-                        <div class="row mb-2">
-                            <div class="col-4"><label class="col-form-label">점심</label></div>
-                            <div class="col-4"><InputNumber @bind-Value="request.LunchBudget" class="form-control form-control-sm" /></div>
-                            <div class="col-4"><InputNumber @bind-Value="request.LunchCalories" class="form-control form-control-sm" /></div>
-                        </div>
-                        <div class="row mb-2">
-                            <div class="col-4"><label class="col-form-label">저녁</label></div>
-                            <div class="col-4"><InputNumber @bind-Value="request.DinnerBudget" class="form-control form-control-sm" /></div>
-                            <div class="col-4"><InputNumber @bind-Value="request.DinnerCalories" class="form-control form-control-sm" /></div>
-                        </div>
+                    <h5 class="mt-4">2. 주요 기능</h5>
+                    <ul>
+                        <li><strong>자동 식단 생성:</strong> 설정된 기간 동안 아침, 점심, 저녁 메뉴를 자동으로 구성합니다.</li>
+                        <li><strong>맞춤형 필터링:</strong> 대상 연령층과 현재 계절에 맞는 제철 음식을 우선적으로 선택합니다.</li>
+                        <li><strong>예산 및 칼로리 관리:</strong> 끼니별 설정된 한도 내에서 메뉴를 조합합니다.</li>
+                        <li><strong>데이터 확장성:</strong> CSV 파일을 통해 식품 데이터와 가격 정보를 쉽게 업데이트할 수 있습니다.</li>
+                        <li><strong>결과 저장:</strong> 생성된 식단표를 CSV 파일로 다운로드하여 엑셀에서 활용할 수 있습니다.</li>
+                    </ul>
 
-                        <button type="submit" class="btn btn-primary w-100 mt-3" disabled="@(!foodDatabase.Any())">
-                            식단 생성하기
-                        </button>
-                    </EditForm>
+                    <h5 class="mt-4">3. 사용 방법</h5>
+                    <ol>
+                        <li><strong>데이터 로드:</strong> 기본 데이터가 자동으로 로드됩니다. 필요 시 '식단 생성기' 탭에서 사용자 정의 CSV를 업로드하세요.</li>
+                        <li><strong>조건 설정:</strong> 시작 날짜, 기간, 대상, 그리고 끼니별 예산과 목표 칼로리를 입력합니다.</li>
+                        <li><strong>생성:</strong> [식단 생성하기] 버튼을 클릭하면 결과가 즉시 표시됩니다.</li>
+                        <li><strong>다운로드:</strong> 결과가 마음에 들면 CSV로 다운로드하여 저장합니다.</li>
+                    </ol>
+
+                    <hr />
+                    <p class="text-muted small">Developed by RedDuck.DietScheduler Project.</p>
                 </div>
             </div>
-        </div>
-
-        <!-- 결과 표시 -->
-        <div class="col-md-8">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h3>📅 생성된 식단표</h3>
-                @if (generatedPlan.Any())
-                {
-                    <button class="btn btn-outline-success" @onclick="DownloadCsv">⬇ CSV 다운로드</button>
-                }
-            </div>
-
-            @if (!generatedPlan.Any())
-            {
-                <div class="alert alert-secondary">
-                    조건을 확인하고 [식단 생성하기] 버튼을 눌러주세요.
-                </div>
-            }
-            else
-            {
-                <div class="table-responsive">
-                    <table class="table table-bordered table-striped">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>날짜</th>
-                                <th>아침 (kcal/원)</th>
-                                <th>점심 (kcal/원)</th>
-                                <th>저녁 (kcal/원)</th>
-                                <th>일일 합계</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var day in generatedPlan)
-                            {
-                                <tr>
-                                    <td>@day.Date.ToString("MM/dd") <br/><small>(@day.Date.DayOfWeek)</small></td>
-                                    <td>
-                                        @RenderMeal(day.Breakfast)
-                                    </td>
-                                    <td>
-                                        @RenderMeal(day.Lunch)
-                                    </td>
-                                    <td>
-                                        @RenderMeal(day.Dinner)
-                                    </td>
-                                    <td>
-                                        <strong>@day.TotalCalories kcal</strong><br/>
-                                        @day.TotalPrice.ToString("N0") 원
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            }
-        </div>
+        }
     </div>
 </div>
 
 @code {
+    private int activeTab = 0; // 0: 생성기, 1: DB, 2: 정보
+
     private DietRequest request = new DietRequest();
     private List<FoodItem> foodDatabase = new();
     private List<DailyDiet> generatedPlan = new();
@@ -160,16 +280,11 @@
     {
         try
         {
-            // 1. 식품 가격 정보 로드
-            // 로컬 개발 환경이나 GitHub Pages 환경에 따라 경로가 다를 수 있음
-            // <base href>가 설정되어 있으므로 상대 경로 사용 가능
             var foodCsv = await Http.GetStringAsync("CSVs/FoodPriceList.csv");
             foodDatabase = await CsvService.ParseFoodItemsFromStringAsync(foodCsv);
 
-            // 2. 1년치 식단 기록 로드 (현재는 로직에 직접 사용되진 않고 로드 확인만 함)
             var historyCsv = await Http.GetStringAsync("CSVs/DietHistory.csv");
-            // TODO: 실제 파싱 로직 구현 시 여기에 추가
-            previousHistoryCount = historyCsv.Split('\n').Length - 1; // 대략적인 라인 수 체크
+            previousHistoryCount = historyCsv.Split('\n').Length - 1; 
 
             isLoaded = true;
         }
@@ -179,7 +294,6 @@
         }
     }
     
-    // 파일 업로드 (덮어쓰기)
     private async Task LoadFoodCsv(InputFileChangeEventArgs e)
     {
         try 
@@ -195,13 +309,12 @@
 
     private void LoadHistoryCsv(InputFileChangeEventArgs e)
     {
-        // TODO: 이전 식단 기록 파싱 (현재 로직에는 미반영, 추후 확장)
+        // TODO: 이전 식단 기록 파싱
     }
 
     private void GenerateDiet()
     {
         if (!foodDatabase.Any()) return;
-        
         generatedPlan = DietGeneratorService.GenerateDiet(request, foodDatabase, new List<string>());
     }
 
@@ -241,4 +354,24 @@
         builder.CloseElement();
         builder.CloseElement();
     };
+
+    private int GetCategoryOrder(string category)
+    {
+        if (category.Contains("밥")) return 1;
+        if (category.Contains("국") || category.Contains("찌개")) return 2;
+        if (category.Contains("메인")) return 3;
+        if (category.Contains("반찬") || category.Contains("김치")) return 4;
+        if (category.Contains("디저트") || category.Contains("간식")) return 5;
+        return 99; // 기타
+    }
+
+    private string GetCategoryBadgeClass(string category)
+    {
+        if (category.Contains("밥")) return "bg-primary";       // 파랑
+        if (category.Contains("국") || category.Contains("찌개")) return "bg-warning text-dark"; // 노랑
+        if (category.Contains("메인")) return "bg-danger";      // 빨강
+        if (category.Contains("반찬")) return "bg-success";     // 초록
+        if (category.Contains("김치")) return "bg-success";     // 초록
+        return "bg-secondary"; // 회색
+    }
 }
