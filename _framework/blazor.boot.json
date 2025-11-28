@@ -1,7 +1,7 @@
 {
   "entryAssembly": "WebDietScheduler",
   "resources": {
-    "hash": "sha256-cNDALR5FKj/NoI70e8Dhw/mThCuE0dgkVqfSMtDUVVg=",
+    "hash": "sha256-NvU3+Fc1zwu/+DOdQRjxjb/TMaCoW2BsKj4hXGC5GTI=",
     "runtime": {
       "dotnet.js": "sha256-eaJTmow4t8eE7FZMZR5Ja41JMOefGCbIYDTdpclGsac=",
       "dotnet.timezones.blat": "sha256-gbATD5HDsHYtW8vdPYh9iSBY4O5CjvMeCSF5xXWF1xo=",
@@ -36,19 +36,19 @@
       "System.ComponentModel.dll": "sha256-ltTqO+dw5n4ix2Usql/ZUwIyOyVtlDU5gEPCxbbvg8o=",
       "System.Console.dll": "sha256-bfRjq3tylKppZ7p9HwPl4YZzi/tTyjtbQU3tMDvHdig=",
       "System.Linq.Expressions.dll": "sha256-QViXDMjyXMIZ5/6b4hZbRGQYZJhn1mhMl0CssnazUdc=",
-      "System.Linq.dll": "sha256-e0UxdZJ45sWe4DN1wY5QkPW0+aQ2VovPHWHZ5IMBROo=",
+      "System.Linq.dll": "sha256-TGa/YVYqfF/A9dMxruJDulxqOwB1uwKk8uirHonfGv4=",
       "System.Memory.dll": "sha256-YKjyYyKyYs+W9iTcewWDjDv4XPp2tiqxPJVsyrmx36M=",
       "System.Net.Http.dll": "sha256-huevz4ON4mHZv6doQAo01TM9fV4Xb0z/4SZXkqy+1aA=",
       "System.Net.Primitives.dll": "sha256-hqakeXMK2G7A7GgHGOHJ64E9T3UK56M5o7LSbxOau6I=",
       "System.ObjectModel.dll": "sha256-VqkkBT4QvuO69Ywkoi+k+HeKncDhkVpssR3Q05FEzHQ=",
       "System.Private.Uri.dll": "sha256-ndp1ULri5r1VWd9Yl7+jBeQK8qoQ9AYOAYQIXC0ITQQ=",
       "System.Runtime.InteropServices.JavaScript.dll": "sha256-rzpGyyjUL4+ASZ1bvIB8FMdD4b4OhvCXv9OBEwDVUVM=",
-      "System.Runtime.dll": "sha256-QMXvCzA+RH+LPn7fPar2DL8DyenxCK+7jKcJzkPEZCA=",
+      "System.Runtime.dll": "sha256-Xu1RWc2bkFE/CGVx0hD6Yo69tgu55uAN2Vrgyp/6xrw=",
       "System.Text.Encodings.Web.dll": "sha256-lFKuTdK7dtov2eQtRGzxU/SvD4yA7ybK4oD2lzMl77g=",
       "System.Text.Json.dll": "sha256-qQ10Y6302khKrHQGMmz2lV+rXhNQeUo1srKztHOoxc4=",
       "System.dll": "sha256-X00CS76RYP+1bonecVV1Cn/0jOHeoVQUo1GS8UHpHpM=",
-      "System.Private.CoreLib.dll": "sha256-es5W39lom0HmX8jE5loVqJkv/1+V0PkuGlKxWOgNyxs=",
-      "WebDietScheduler.dll": "sha256-tOOWsEjyQLHGwcl78kf6zF+6ao4TiQXgSq5Jawe5YkI="
+      "System.Private.CoreLib.dll": "sha256-GFTyW0qvINyAhadN25KIiyVB6nnEVfaooSm0gAMJ3gs=",
+      "WebDietScheduler.dll": "sha256-uEmt+VnsRQMF1a3H1PljJ7xcB6MfcjdHYGcR+xasYRw="
     },
     "runtimeAssets": {
       "dotnet.wasm": {
